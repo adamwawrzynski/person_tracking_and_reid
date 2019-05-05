@@ -69,7 +69,12 @@ def mouse_callback(event,x,y,flags,param):
 
 
 def manual_label_video(source, dataset, start=0):
-    ''' Manually label object on video to create train dataset. '''
+    ''' Manually label object on video to create train dataset.
+    1 left mouse click - specify left right corner of bounding box
+    2 left mouse click - specify right bottom corner of bounding box
+    q - pass previous bounding box coordinates to the next frame
+    w - erase bounding box coordinates
+    '''
 
     global mouse1X, mouse1Y, mouse2X, mouse2Y
     if not os.path.isfile(source):
