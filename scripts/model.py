@@ -16,7 +16,7 @@ from .collect_dataset import split_dataset
 from .utils import rotateImage
 
 # randomized colors of bounding boxes
-COLORS = np.random.uniform(0, 255, size=(2, 1))
+COLORS = ((0,0,255), (255,0,0))
 
 def cnn_net():
     ''' Convolutional neural network model to classify specified person. '''
@@ -145,7 +145,7 @@ def train_model(dataset, model, weights_filename, epochs, restore=False):
 
     for i in range(epochs):
         X, y = split_dataset(class_0, class_1)
-        model.fit(X, y, epochs=1, batch_size=25)
+        model.fit(X, y, epochs=1, batch_size=25, validation_split=0.1)
 
     model.save_weights(weights_filename)
 

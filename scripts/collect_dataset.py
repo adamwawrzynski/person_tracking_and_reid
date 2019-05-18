@@ -10,7 +10,7 @@ from .utils import rectangleContains
 
 
 # randomized colors of bounding boxes
-COLORS = np.random.uniform(0, 255, size=(2, 1))
+COLORS = ((255,0,0), (0,0,255))
 
 # coordinates of bounding box
 mouse1X = None
@@ -277,6 +277,15 @@ def create_dataset(source, destination, dataset):
 
     line = ' '
 
+    counter_class_0 = 0
+    counter_class_1 = 0
+
+    if not os.path.exists(destination+"/class_0"):
+        os.mkdir(destination+"/class_0")
+
+    if not os.path.exists(destination+"/class_1"):
+        os.mkdir(destination+"/class_1")
+
     # until end of file
     while line != '':
 
@@ -290,15 +299,6 @@ def create_dataset(source, destination, dataset):
         frame = rotateImage(frame, 270)
 
         line = file.readline()
-
-        counter_class_0 = 0
-        counter_class_1 = 0
-
-        if not os.path.exists(destination+"/class_0"):
-            os.mkdirs(destination+"/class_0")
-
-        if not os.path.exists(destination+"/class_1"):
-            os.mkdirs(destination+"/class_1")
 
         # until end of file
         while line != '':
@@ -323,6 +323,8 @@ def create_dataset(source, destination, dataset):
                 elif id == 1:
                     counter_class_1 += 1
                     cv2.imwrite(destination+"/class_1/"+str(counter_class_1)+".jpg", image)
+            else:
+                break
 
             line = file.readline()
 
@@ -528,12 +530,26 @@ def check_label_video_from_yolo(source, dataset, start=0, scale=0.3):
                         (int(int(x2)/scale), int(int(y2)/scale)), 
                         COLORS[0], 
                         10)
+                    cv2.putText(frame, 
+                        str(int(x1)) +","+str(int(y1))+","+str(int(x2))+","+str(int(y2)),
+                        (int(int(x1)/scale), int(int(y1)/scale) - 10), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 
+                        1, 
+                        COLORS[0], 
+                        5)
                 else:
                     cv2.rectangle(frame, 
                         (int(int(x1)/scale), int(int(y1)/scale)), 
                         (int(int(x2)/scale), int(int(y2)/scale)), 
                         COLORS[1], 
                         10)
+                    cv2.putText(frame, 
+                        str(int(x1)) +","+str(int(y1))+","+str(int(x2))+","+str(int(y2)),
+                        (int(int(x1)/scale), int(int(y1)/scale) - 10), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 
+                        1, 
+                        COLORS[1], 
+                        5)
             else:
                 break
 
@@ -543,6 +559,13 @@ def check_label_video_from_yolo(source, dataset, start=0, scale=0.3):
         key = cv2.waitKey(0)
         if key != 27:
             frame = cv2.resize(frame, dsize=None, fx=scale, fy=scale)
+            cv2.putText(frame, 
+                        "Frame "+str(counter - 1),
+                        (50, 50), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 
+                        1, 
+                        COLORS[1], 
+                        3)
             cv2.imshow('image', frame)
         else:
             exit()
