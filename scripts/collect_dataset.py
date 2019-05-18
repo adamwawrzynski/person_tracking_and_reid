@@ -12,25 +12,6 @@ from .utils import rectangleContains
 # randomized colors of bounding boxes
 COLORS = np.random.uniform(0, 255, size=(2, 1))
 
-
-class Sample(object):
-    ''' Class representing image with class. '''
-
-    def __init__(self):
-        self.image = None
-        self.id = None
-
-    def __str__(self):
-        print("Image: {}".format(self.image.shape))
-        print("ID: {}".format(self.id))
-
-    def set_image(self, image):
-        self.image = image
-
-    def set_id(self, id):
-        self.id = id
-
-
 # coordinates of bounding box
 mouse1X = None
 mouse1Y = None
