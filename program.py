@@ -8,7 +8,6 @@ import os
 from scripts.collect_dataset import get_dataset
 from scripts.utils import rotateImage
 import scripts.model as model
-import scripts.model as check_label_video_from_yolo
 
 
 if __name__ == '__main__':
@@ -33,5 +32,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # check_label_video_from_yolo(args.source, 'data/data.txt', start=0, scale=0.3)
-    # model.train_model(args.source, 'data/data.txt', 'data/cnn_net2.dh5', 1, restore=True)
-    model.check_model(args.source, 'data/cnn_net2.dh5', 0.4)
+    model.train_model(args.source, 'data/data.txt', 'data/cnn_net2.dh5', 1, restore=True)
+    # model.check_model(args.source, 'data/cnn_net2.dh5', 0.4)
