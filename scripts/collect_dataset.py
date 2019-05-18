@@ -138,7 +138,6 @@ def manual_label_video(source, dataset, start=0, scale=0.3, color=(255,255,255))
     file.close()
 
 
-
 def label_detected_person_on_video(source, dataset, confidence=0.25, start=0, scale=0.3):
     ''' Create dataset of detected people using YOLOv3 by pointing at given 
     bounding box. '''
@@ -251,9 +250,8 @@ def label_detected_person_on_video(source, dataset, confidence=0.25, start=0, sc
     file.close()
 
 
-
 def create_dataset(source, destination, dataset):
-    ''' Return generator of samples from dataset. '''
+    ''' Create fixed size dataset of images from video on disk. '''
 
     # check if video file exists
     if not os.path.isfile(source):
@@ -348,7 +346,7 @@ def create_dataset(source, destination, dataset):
 
 
 def get_dataset(dataset):
-    ''' Return generator of samples from dataset. '''
+    ''' Return array of images for each class. '''
 
     # check if video file exists
     if not os.path.exists(dataset):
@@ -380,6 +378,7 @@ def get_dataset(dataset):
 
 
 def split_dataset(class_0, class_1):
+    ''' Randomize dataset and return array of images and classes. '''
     # randomize order in dataset
     np.random.shuffle(class_0)
 
@@ -646,7 +645,6 @@ def process_video(source, dataset, confidence, scale=0.3):
     # release resources
     cv2.destroyAllWindows()
     file.close()
-
 
 
 def detect_faces_on_video(source, scale=0.3):
