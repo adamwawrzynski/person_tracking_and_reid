@@ -3,31 +3,14 @@ from cvlib.object_detection import draw_bbox
 import cv2
 import os
 import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.utils import shuffle
 from .utils import rotateImage
 from .utils import rectangleContains
 
 
 # randomized colors of bounding boxes
-COLORS = np.random.uniform(0, 255, size=(2, 1))
-
-
-class Sample(object):
-    ''' Class representing image with class. '''
-
-    def __init__(self):
-        self.image = None
-        self.id = None
-
-    def __str__(self):
-        print("Image: {}".format(self.image.shape))
-        print("ID: {}".format(self.id))
-
-    def set_image(self, image):
-        self.image = image
-
-    def set_id(self, id):
-        self.id = id
-
+COLORS = ((255,0,0), (0,0,255))
 
 # coordinates of bounding box
 mouse1X = None
@@ -155,7 +138,6 @@ def manual_label_video(source, dataset, start=0, scale=0.3, color=(255,255,255))
     file.close()
 
 
-
 def label_detected_person_on_video(source, dataset, confidence=0.25, start=0, scale=0.3):
     ''' Create dataset of detected people using YOLOv3 by pointing at given 
     bounding box. '''
@@ -268,9 +250,8 @@ def label_detected_person_on_video(source, dataset, confidence=0.25, start=0, sc
     file.close()
 
 
-
-def get_dataset(source, dataset):
-    ''' Return generator of samples from dataset. '''
+def create_dataset(source, destination, dataset):
+    ''' Create fixed size dataset of images from video on disk. '''
 
     # check if video file exists
     if not os.path.isfile(source):
@@ -295,6 +276,15 @@ def get_dataset(source, dataset):
         exit()
 
     line = ' '
+
+    counter_class_0 = 0
+    counter_class_1 = 0
+
+    if not os.path.exists(destination+"/class_0"):
+        os.mkdir(destination+"/class_0")
+
+    if not os.path.exists(destination+"/class_1"):
+        os.mkdir(destination+"/class_1")
 
     # until end of file
     while line != '':
@@ -325,15 +315,14 @@ def get_dataset(source, dataset):
                 # extract detected person from video frame
                 image = frame[y1:y2, x1:x2]
 
-                # reshape to fit neural network input
-                image = image.reshape(1, image.shape[0], image.shape[1], image.shape[2])
-                sample = Sample()
-                # one_hot_vector = np.zeros((1,2))
-                # one_hot_vector.itemset(id, 1)
-                sample.set_id(id)
-                # sample.set_id(one_hot_vector)
-                sample.set_image(image)
-                yield sample
+                image = cv2.resize(image, dsize=(128, 128), interpolation=cv2.INTER_CUBIC)
+
+                if id == 0:
+                    counter_class_0 += 1
+                    cv2.imwrite(destination+"/class_0/"+str(counter_class_0)+".jpg", image)
+                elif id == 1:
+                    counter_class_1 += 1
+                    cv2.imwrite(destination+"/class_1/"+str(counter_class_1)+".jpg", image)
             else:
                 break
 
@@ -342,6 +331,60 @@ def get_dataset(source, dataset):
     # release resources
     cv2.destroyAllWindows()
     file.close()
+
+
+def get_dataset(dataset):
+    ''' Return array of images for each class. '''
+
+    # check if video file exists
+    if not os.path.exists(dataset):
+        print("Dataset directory does not exist, exiting")
+        exit()
+
+    class_0_dataset_path = dataset+"/class_0"
+    class_0_images_filenames = os.listdir(class_0_dataset_path)
+
+    class_0 = []
+
+    for image_file in class_0_images_filenames:
+        image = cv2.imread(class_0_dataset_path+"/"+image_file, cv2.IMREAD_COLOR)
+        class_0.append(image)
+
+    class_1_dataset_path = dataset+"/class_1"
+    class_1_images_filenames = os.listdir(class_1_dataset_path)
+
+    class_1 = []
+
+    for image_file in class_1_images_filenames:
+        image = cv2.imread(class_1_dataset_path+"/"+image_file, cv2.IMREAD_COLOR)
+        class_1.append(image)
+    
+    class_0 = np.asarray(class_0)
+    class_1 = np.asarray(class_1)
+
+    return class_0, class_1
+
+
+def split_dataset(class_0, class_1):
+    ''' Randomize dataset and return array of images and classes. '''
+    # randomize order in dataset
+    np.random.shuffle(class_0)
+
+    # get number of elements equal to class 1 elements
+    class_0 = class_0[:class_1.shape[0]]
+
+    # create one dataset
+    X = np.concatenate((class_0, class_1), axis=0)
+
+    # create class labels
+    y_class_0 = np.zeros((class_0.shape[0], 1))
+    y_class_1 = np.ones((class_1.shape[0], 1))
+
+    y = np.concatenate((y_class_0, y_class_1), axis=0)
+
+    # randomize order in dataset
+    X, y = shuffle(X, y)
+    return X, y
 
 
 def check_label_video(source, dataset, start=0, scale=0.3):
@@ -487,12 +530,26 @@ def check_label_video_from_yolo(source, dataset, start=0, scale=0.3):
                         (int(int(x2)/scale), int(int(y2)/scale)), 
                         COLORS[0], 
                         10)
+                    cv2.putText(frame, 
+                        str(int(x1)) +","+str(int(y1))+","+str(int(x2))+","+str(int(y2)),
+                        (int(int(x1)/scale), int(int(y1)/scale) - 10), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 
+                        1, 
+                        COLORS[0], 
+                        5)
                 else:
                     cv2.rectangle(frame, 
                         (int(int(x1)/scale), int(int(y1)/scale)), 
                         (int(int(x2)/scale), int(int(y2)/scale)), 
                         COLORS[1], 
                         10)
+                    cv2.putText(frame, 
+                        str(int(x1)) +","+str(int(y1))+","+str(int(x2))+","+str(int(y2)),
+                        (int(int(x1)/scale), int(int(y1)/scale) - 10), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 
+                        1, 
+                        COLORS[1], 
+                        5)
             else:
                 break
 
@@ -502,6 +559,13 @@ def check_label_video_from_yolo(source, dataset, start=0, scale=0.3):
         key = cv2.waitKey(0)
         if key != 27:
             frame = cv2.resize(frame, dsize=None, fx=scale, fy=scale)
+            cv2.putText(frame, 
+                        "Frame "+str(counter - 1),
+                        (50, 50), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 
+                        1, 
+                        COLORS[1], 
+                        3)
             cv2.imshow('image', frame)
         else:
             exit()
@@ -590,7 +654,6 @@ def process_video(source, dataset, confidence, scale=0.3):
     # release resources
     cv2.destroyAllWindows()
     file.close()
-
 
 
 def detect_faces_on_video(source, scale=0.3):
