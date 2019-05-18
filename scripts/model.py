@@ -12,6 +12,7 @@ from keras.layers import MaxPooling2D
 from keras.models import Model, Sequential
 
 from .collect_dataset import get_dataset
+from .collect_dataset import split_dataset
 from .utils import rotateImage
 
 # randomized colors of bounding boxes
@@ -57,7 +58,11 @@ def cnn_net2():
                 activation='relu',
                 data_format='channels_last'))
     model.add(GlobalMaxPooling2D())
+<<<<<<< HEAD
     model.add(Dense(100, activation='relu'))
+=======
+    model.add(Dense(512, activation='relu'))
+>>>>>>> 760aabf... Add function to create and manipulate fixed size image dataset
     model.add(Dense(1, activation='sigmoid'))
 
     model.summary()
@@ -69,7 +74,71 @@ def cnn_net2():
     return model
 
 
+<<<<<<< HEAD
 def train_model(source, dataset, weights_filename, epochs, restore=False):
+=======
+def cnn_net3():
+    ''' Convolutional neural network model to classify specified person. '''
+
+    model = Sequential()
+    model.add(Conv2D(filters=64, 
+                kernel_size=(5, 5), 
+                input_shape=(None, None, 3), 
+                padding="same",
+                activation='relu',
+                data_format='channels_last'))
+    model.add(MaxPooling2D((3,3)))
+    model.add(Conv2D(filters=64, 
+                kernel_size=(5, 5), 
+                padding="same",
+                activation='relu',
+                data_format='channels_last'))
+    model.add(GlobalMaxPooling2D())
+    model.add(Dense(512, activation='relu'))
+    model.add(Dense(2, activation='softmax'))
+
+    model.summary()
+
+    model.compile(loss='categorical_crossentropy',
+              optimizer='adam',
+              metrics=['accuracy'])
+
+    return model
+
+
+def cnn_net4():
+    ''' Convolutional neural network model to classify specified person. '''
+
+    model = Sequential()
+    model.add(Conv2D(filters=128, 
+                kernel_size=(5, 5), 
+                input_shape=(None, None, 3), 
+                padding="same",
+                activation='relu',
+                data_format='channels_last'))
+    model.add(MaxPooling2D(pool_size=(3,3),
+                strides=(2,2)))
+    model.add(Conv2D(filters=128, 
+                kernel_size=(5, 5), 
+                padding="same",
+                activation='relu',
+                data_format='channels_last'))
+    model.add(GlobalMaxPooling2D())
+    model.add(Dense(512, activation='relu'))
+    model.add(Dropout(0.15))
+    model.add(Dense(2, activation='softmax'))
+
+    model.summary()
+
+    model.compile(loss='categorical_crossentropy',
+              optimizer='adam',
+              metrics=['accuracy'])
+
+    return model
+
+
+def train_model(dataset, model, weights_filename, epochs, restore=False):
+>>>>>>> 760aabf... Add function to create and manipulate fixed size image dataset
     ''' Train model to detect only specified person. '''
 
     # load neural network model
@@ -79,14 +148,20 @@ def train_model(source, dataset, weights_filename, epochs, restore=False):
     if restore == True:
         model.load_weights(weights_filename)
 
-    # create generator of dataset
-    generator = get_dataset(source, dataset)
+    # load images from disk
+    class_0, class_1 = get_dataset(dataset)
 
+<<<<<<< HEAD
     # train on each sample from dataset
     for sample in generator:
         image = sample.image
         id = sample.id
         model.fit(image, [id], epochs=epochs, batch_size=1)
+=======
+    for i in range(epochs):
+        X, y = split_dataset(class_0, class_1)
+        model.fit(X, y, epochs=1, batch_size=25)
+>>>>>>> 760aabf... Add function to create and manipulate fixed size image dataset
 
     model.save_weights(weights_filename)
 
@@ -142,7 +217,9 @@ def check_model(source, weights_filename, threshold, confidence=0.25, scale=0.3)
             if label[i] == 'person':
 
                 # extract detected person from video frame
-                image = frame[bbox[i][0]:bbox[i][2], bbox[i][1]:bbox[i][3]]
+                image = frame[ bbox[i][1]:bbox[i][3],bbox[i][0]:bbox[i][2]]
+
+                image = cv2.resize(image, dsize=(128, 128), interpolation=cv2.INTER_CUBIC)
 
                 # reshape to fit neural network input
                 image = image.reshape(1, image.shape[0], image.shape[1], image.shape[2])
@@ -150,9 +227,12 @@ def check_model(source, weights_filename, threshold, confidence=0.25, scale=0.3)
                 # predict class of detected person
                 id = model.predict(image)
 
+<<<<<<< HEAD
                 # get probability
                 id = id.item(0)
 
+=======
+>>>>>>> 760aabf... Add function to create and manipulate fixed size image dataset
                 # if probability is greater than threshold draw with different color
                 if id > threshold:
                     cv2.rectangle(frame, 
@@ -161,7 +241,11 @@ def check_model(source, weights_filename, threshold, confidence=0.25, scale=0.3)
                         COLORS[0], 
                         10)
                     cv2.putText(frame, 
+<<<<<<< HEAD
                         "class: 1, prob: " + str(id), 
+=======
+                        "class: 1, prob: " + str(id),
+>>>>>>> 760aabf... Add function to create and manipulate fixed size image dataset
                         (bbox[i][0],bbox[i][1]-10), 
                         cv2.FONT_HERSHEY_SIMPLEX, 
                         1, 
@@ -174,7 +258,11 @@ def check_model(source, weights_filename, threshold, confidence=0.25, scale=0.3)
                         COLORS[1], 
                         10)
                     cv2.putText(frame, 
+<<<<<<< HEAD
                         "class: 0, prob: " + str(1 - id), 
+=======
+                        "class: 0, prob: " + str(id), 
+>>>>>>> 760aabf... Add function to create and manipulate fixed size image dataset
                         (bbox[i][0],bbox[i][1]-10), 
                         cv2.FONT_HERSHEY_SIMPLEX, 
                         1, 

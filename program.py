@@ -6,6 +6,12 @@ import numpy as np
 import argparse
 import os
 from scripts.collect_dataset import get_dataset
+<<<<<<< HEAD
+=======
+from scripts.collect_dataset import create_dataset
+from scripts.collect_dataset import split_dataset
+from scripts.collect_dataset import check_label_video_from_yolo
+>>>>>>> 760aabf... Add function to create and manipulate fixed size image dataset
 from scripts.utils import rotateImage
 import scripts.model as model
 
@@ -31,6 +37,11 @@ if __name__ == '__main__':
     # read arguments from the command line
     args = parser.parse_args()
 
-    # check_label_video_from_yolo(args.source, 'data/data.txt', start=0, scale=0.3)
-    model.train_model(args.source, 'data/data.txt', 'data/cnn_net2.dh5', 1, restore=True)
-    # model.check_model(args.source, 'data/cnn_net2.dh5', 0.4)
+
+#     check_label_video_from_yolo(args.source, 'data/data.txt', start=0, scale=0.3)
+#     model.train_model("/home/adam/person_tracking_and_reid/data/dataset", 
+#             model.cnn_net2(), 
+#             'data/cnn_net2.dh5', 
+#             5, 
+#             restore=False)
+    model.check_model(args.source, model.cnn_net2(), 'data/cnn_net2.dh5', 0.4)

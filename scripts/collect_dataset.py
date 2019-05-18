@@ -3,6 +3,8 @@ from cvlib.object_detection import draw_bbox
 import cv2
 import os
 import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.utils import shuffle
 from .utils import rotateImage
 from .utils import rectangleContains
 
@@ -269,7 +271,7 @@ def label_detected_person_on_video(source, dataset, confidence=0.25, start=0, sc
 
 
 
-def get_dataset(source, dataset):
+def create_dataset(source, destination, dataset):
     ''' Return generator of samples from dataset. '''
 
     # check if video file exists
@@ -310,6 +312,15 @@ def get_dataset(source, dataset):
 
         line = file.readline()
 
+        counter_class_0 = 0
+        counter_class_1 = 0
+
+        if not os.path.exists(destination+"/class_0"):
+            os.mkdirs(destination+"/class_0")
+
+        if not os.path.exists(destination+"/class_1"):
+            os.mkdirs(destination+"/class_1")
+
         # until end of file
         while line != '':
 
@@ -325,6 +336,7 @@ def get_dataset(source, dataset):
                 # extract detected person from video frame
                 image = frame[y1:y2, x1:x2]
 
+<<<<<<< HEAD
                 # reshape to fit neural network input
                 image = image.reshape(1, image.shape[0], image.shape[1], image.shape[2])
                 sample = Sample()
@@ -336,12 +348,75 @@ def get_dataset(source, dataset):
                 yield sample
             else:
                 break
+=======
+                image = cv2.resize(image, dsize=(128, 128), interpolation=cv2.INTER_CUBIC)
+
+                if id == 0:
+                    counter_class_0 += 1
+                    cv2.imwrite(destination+"/class_0/"+str(counter_class_0)+".jpg", image)
+                elif id == 1:
+                    counter_class_1 += 1
+                    cv2.imwrite(destination+"/class_1/"+str(counter_class_1)+".jpg", image)
+>>>>>>> 760aabf... Add function to create and manipulate fixed size image dataset
 
             line = file.readline()
 
     # release resources
     cv2.destroyAllWindows()
     file.close()
+
+
+def get_dataset(dataset):
+    ''' Return generator of samples from dataset. '''
+
+    # check if video file exists
+    if not os.path.exists(dataset):
+        print("Dataset directory does not exist, exiting")
+        exit()
+
+    class_0_dataset_path = dataset+"/class_0"
+    class_0_images_filenames = os.listdir(class_0_dataset_path)
+
+    class_0 = []
+
+    for image_file in class_0_images_filenames:
+        image = cv2.imread(class_0_dataset_path+"/"+image_file, cv2.IMREAD_COLOR)
+        class_0.append(image)
+
+    class_1_dataset_path = dataset+"/class_1"
+    class_1_images_filenames = os.listdir(class_1_dataset_path)
+
+    class_1 = []
+
+    for image_file in class_1_images_filenames:
+        image = cv2.imread(class_1_dataset_path+"/"+image_file, cv2.IMREAD_COLOR)
+        class_1.append(image)
+    
+    class_0 = np.asarray(class_0)
+    class_1 = np.asarray(class_1)
+
+    return class_0, class_1
+
+
+def split_dataset(class_0, class_1):
+    # randomize order in dataset
+    np.random.shuffle(class_0)
+
+    # get number of elements equal to class 1 elements
+    class_0 = class_0[:class_1.shape[0]]
+
+    # create one dataset
+    X = np.concatenate((class_0, class_1), axis=0)
+
+    # create class labels
+    y_class_0 = np.zeros((class_0.shape[0], 1))
+    y_class_1 = np.ones((class_1.shape[0], 1))
+
+    y = np.concatenate((y_class_0, y_class_1), axis=0)
+
+    # randomize order in dataset
+    X, y = shuffle(X, y)
+    return X, y
 
 
 def check_label_video(source, dataset, start=0, scale=0.3):
