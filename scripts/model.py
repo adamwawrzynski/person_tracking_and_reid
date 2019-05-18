@@ -58,11 +58,7 @@ def cnn_net2():
                 activation='relu',
                 data_format='channels_last'))
     model.add(GlobalMaxPooling2D())
-<<<<<<< HEAD
-    model.add(Dense(100, activation='relu'))
-=======
     model.add(Dense(512, activation='relu'))
->>>>>>> 760aabf... Add function to create and manipulate fixed size image dataset
     model.add(Dense(1, activation='sigmoid'))
 
     model.summary()
@@ -74,9 +70,6 @@ def cnn_net2():
     return model
 
 
-<<<<<<< HEAD
-def train_model(source, dataset, weights_filename, epochs, restore=False):
-=======
 def cnn_net3():
     ''' Convolutional neural network model to classify specified person. '''
 
@@ -138,7 +131,6 @@ def cnn_net4():
 
 
 def train_model(dataset, model, weights_filename, epochs, restore=False):
->>>>>>> 760aabf... Add function to create and manipulate fixed size image dataset
     ''' Train model to detect only specified person. '''
 
     # load neural network model
@@ -151,17 +143,9 @@ def train_model(dataset, model, weights_filename, epochs, restore=False):
     # load images from disk
     class_0, class_1 = get_dataset(dataset)
 
-<<<<<<< HEAD
-    # train on each sample from dataset
-    for sample in generator:
-        image = sample.image
-        id = sample.id
-        model.fit(image, [id], epochs=epochs, batch_size=1)
-=======
     for i in range(epochs):
         X, y = split_dataset(class_0, class_1)
         model.fit(X, y, epochs=1, batch_size=25)
->>>>>>> 760aabf... Add function to create and manipulate fixed size image dataset
 
     model.save_weights(weights_filename)
 
@@ -227,12 +211,6 @@ def check_model(source, weights_filename, threshold, confidence=0.25, scale=0.3)
                 # predict class of detected person
                 id = model.predict(image)
 
-<<<<<<< HEAD
-                # get probability
-                id = id.item(0)
-
-=======
->>>>>>> 760aabf... Add function to create and manipulate fixed size image dataset
                 # if probability is greater than threshold draw with different color
                 if id > threshold:
                     cv2.rectangle(frame, 
@@ -241,11 +219,7 @@ def check_model(source, weights_filename, threshold, confidence=0.25, scale=0.3)
                         COLORS[0], 
                         10)
                     cv2.putText(frame, 
-<<<<<<< HEAD
-                        "class: 1, prob: " + str(id), 
-=======
                         "class: 1, prob: " + str(id),
->>>>>>> 760aabf... Add function to create and manipulate fixed size image dataset
                         (bbox[i][0],bbox[i][1]-10), 
                         cv2.FONT_HERSHEY_SIMPLEX, 
                         1, 
@@ -258,11 +232,7 @@ def check_model(source, weights_filename, threshold, confidence=0.25, scale=0.3)
                         COLORS[1], 
                         10)
                     cv2.putText(frame, 
-<<<<<<< HEAD
-                        "class: 0, prob: " + str(1 - id), 
-=======
                         "class: 0, prob: " + str(id), 
->>>>>>> 760aabf... Add function to create and manipulate fixed size image dataset
                         (bbox[i][0],bbox[i][1]-10), 
                         cv2.FONT_HERSHEY_SIMPLEX, 
                         1, 

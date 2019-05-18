@@ -6,12 +6,9 @@ import numpy as np
 import argparse
 import os
 from scripts.collect_dataset import get_dataset
-<<<<<<< HEAD
-=======
 from scripts.collect_dataset import create_dataset
 from scripts.collect_dataset import split_dataset
 from scripts.collect_dataset import check_label_video_from_yolo
->>>>>>> 760aabf... Add function to create and manipulate fixed size image dataset
 from scripts.utils import rotateImage
 import scripts.model as model
 

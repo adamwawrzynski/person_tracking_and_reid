@@ -315,19 +315,6 @@ def create_dataset(source, destination, dataset):
                 # extract detected person from video frame
                 image = frame[y1:y2, x1:x2]
 
-<<<<<<< HEAD
-                # reshape to fit neural network input
-                image = image.reshape(1, image.shape[0], image.shape[1], image.shape[2])
-                sample = Sample()
-                # one_hot_vector = np.zeros((1,2))
-                # one_hot_vector.itemset(id, 1)
-                sample.set_id(id)
-                # sample.set_id(one_hot_vector)
-                sample.set_image(image)
-                yield sample
-            else:
-                break
-=======
                 image = cv2.resize(image, dsize=(128, 128), interpolation=cv2.INTER_CUBIC)
 
                 if id == 0:
@@ -336,7 +323,6 @@ def create_dataset(source, destination, dataset):
                 elif id == 1:
                     counter_class_1 += 1
                     cv2.imwrite(destination+"/class_1/"+str(counter_class_1)+".jpg", image)
->>>>>>> 760aabf... Add function to create and manipulate fixed size image dataset
 
             line = file.readline()
 
