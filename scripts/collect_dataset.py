@@ -365,8 +365,19 @@ def get_dataset(dataset):
     return class_0, class_1
 
 
-def split_dataset(class_0, class_1):
-    ''' Randomize dataset and return array of images and classes. '''
+def split_dataset(class_0, class_1, test_size=0.1):
+    # create class labels
+    y_class_0 = np.zeros((class_0.shape[0], 1))
+    y_class_1 = np.ones((class_1.shape[0], 1))
+
+    # # split to train and test dataset
+    class_0_train, class_0_test, _, _ = train_test_split(class_0, y_class_0, test_size=test_size)
+    class_1_train, class_1_test, _, _ = train_test_split(class_1, y_class_1, test_size=test_size)
+
+    return class_0_train, class_1_train, class_0_test, class_1_test
+
+def normalize_dataset(class_0, class_1, validation_split=0.1):
+    ''' Normalize dataset and return array of images and classes. '''
     # randomize order in dataset
     np.random.shuffle(class_0)
 

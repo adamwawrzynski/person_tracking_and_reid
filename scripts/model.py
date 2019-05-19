@@ -12,10 +12,12 @@ from keras.layers import Input
 from keras.layers import MaxPooling2D
 from keras.models import Model
 from keras.models import Sequential
+from keras.layers import BatchNormalization
 from keras.optimizers import Adam
 
 from .collect_dataset import get_dataset
 from .collect_dataset import split_dataset
+from .collect_dataset import normalize_dataset
 from .utils import rotateImage
 
 # randomized colors of bounding boxes
@@ -169,7 +171,11 @@ def cifar_10_cnn(input_shape, num_classes=1):
     return model
 
 
-def train_model(dataset, model, weights_filename, iterations, epochs, restore=False):
+def train_model(dataset,
+    model,
+    weights_filename,
+    epochs,
+    restore=False):
     ''' Train model to detect only specified person. '''
 
     # if retrain model weights
@@ -179,14 +185,37 @@ def train_model(dataset, model, weights_filename, iterations, epochs, restore=Fa
     # load images from disk
     class_0, class_1 = get_dataset(dataset)
 
-    for i in range(0, iterations):
-        X, y = split_dataset(class_0, class_1)
-        model.fit(X, y, epochs=epochs, batch_size=25, validation_split=0.1)
+    # split data to train and validation dataset
+    class_0_train, class_1_train, class_0_test, class_1_test = split_dataset(class_0, class_1)
+
+    X_test = np.concatenate((class_0_test, class_1_test))
+
+    y_class_0_test = np.zeros((class_0_test.shape[0], 1))
+    y_class_1_test = np.ones((class_1_test.shape[0], 1))
+
+    y_test = np.concatenate((y_class_0_test, y_class_1_test))
+
+    for i in range(0, epochs):
+        # balance occurance of classes in training dataset
+        X, y = normalize_dataset(class_0_train, class_1_train)
+
+        # run training
+        model.fit(X,
+            y,
+            epochs=1,
+            batch_size=25,
+            validation_data=(X_test, y_test))
 
     model.save_weights(weights_filename)
 
 
-def check_model(source, model, weights_filename, start=0, threshold=0.5, confidence=0.1, scale=0.3):
+def check_model(source,
+    model,
+    weights_filename,
+    start=0,
+    threshold=0.5,
+    confidence=0.1,
+    scale=0.3):
     ''' Display video and draw bounding boxes of detected people with
     predicted classes. '''
 
