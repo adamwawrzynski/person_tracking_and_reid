@@ -250,7 +250,7 @@ def label_detected_person_on_video(source, dataset, confidence=0.25, start=0, sc
     file.close()
 
 
-def create_dataset(source, destination, dataset):
+def create_dataset(source, destination, dataset, image_size):
     ''' Create fixed size dataset of images from video on disk. '''
 
     # check if video file exists
@@ -315,7 +315,10 @@ def create_dataset(source, destination, dataset):
                 # extract detected person from video frame
                 image = frame[y1:y2, x1:x2]
 
-                image = cv2.resize(image, dsize=(128, 128), interpolation=cv2.INTER_CUBIC)
+                if image_size != None:
+                    image = cv2.resize(image,
+                                dsize=(image_size, image_size),
+                                interpolation=cv2.INTER_CUBIC)
 
                 if id == 0:
                     counter_class_0 += 1
@@ -323,6 +326,9 @@ def create_dataset(source, destination, dataset):
                 elif id == 1:
                     counter_class_1 += 1
                     cv2.imwrite(destination+"/class_1/"+str(counter_class_1)+".jpg", image)
+
+                print("Saved images: {}".format(counter_class_1 + counter_class_0),end="\r", flush=True)
+
             else:
                 break
 
@@ -346,19 +352,37 @@ def get_dataset(dataset):
 
     class_0 = []
 
+    images_number = len(class_0_images_filenames)
+    counter = 1
+
     for image_file in class_0_images_filenames:
         image = cv2.imread(class_0_dataset_path+"/"+image_file, cv2.IMREAD_COLOR)
+        print("Loading images from {}: {}/{}".format(class_0_dataset_path,
+            counter,
+            images_number),
+            end="\r", flush=True)
+        counter += 1
         class_0.append(image)
+    print("")
 
     class_1_dataset_path = dataset+"/class_1"
     class_1_images_filenames = os.listdir(class_1_dataset_path)
 
     class_1 = []
 
+    images_number = len(class_1_images_filenames)
+    counter=1
+
     for image_file in class_1_images_filenames:
         image = cv2.imread(class_1_dataset_path+"/"+image_file, cv2.IMREAD_COLOR)
+        print("Loading images from {}: {}/{}".format(class_1_dataset_path,
+            counter,
+            images_number),
+            end="\r", flush=True)
+        counter += 1
         class_1.append(image)
-    
+    print("")
+
     class_0 = np.asarray(class_0)
     class_1 = np.asarray(class_1)
 

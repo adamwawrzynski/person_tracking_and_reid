@@ -109,6 +109,7 @@ def cnn_net4():
     ''' Convolutional neural network model to classify specified person. '''
 
     model = Sequential()
+
     model.add(Conv2D(filters=128, 
                 kernel_size=(5, 5), 
                 input_shape=(None, None, 3), 
@@ -122,6 +123,8 @@ def cnn_net4():
                 padding="same",
                 activation='relu',
                 data_format='channels_last'))
+
+
     model.add(GlobalMaxPooling2D())
     model.add(Dense(512, activation='relu'))
     model.add(Dropout(0.15))
@@ -212,6 +215,7 @@ def train_model(dataset,
 def check_model(source,
     model,
     weights_filename,
+    image_size,
     start=0,
     threshold=0.5,
     confidence=0.1,
@@ -274,7 +278,8 @@ def check_model(source,
                 if image.shape[0] == 0 or image.shape[1] == 0:
                     continue
 
-                image = cv2.resize(image, dsize=(128, 128), interpolation=cv2.INTER_CUBIC)
+                if image_size != None:
+                    image = cv2.resize(image, dsize=(image_size, image_size), interpolation=cv2.INTER_CUBIC)
 
                 # reshape to fit neural network input
                 image = image.reshape(1, image.shape[0], image.shape[1], image.shape[2])

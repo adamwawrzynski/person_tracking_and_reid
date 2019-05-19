@@ -49,5 +49,6 @@ model.train_model(dataset=args.dataset,
 model.check_model(source=args.source,
         model=model.cifar_10_cnn((128,128,3)),
         weights_filename=args.weight_file,
+        image_size=None,
         start=0,
         threshold=0.5)
