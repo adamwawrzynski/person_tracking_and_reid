@@ -2,6 +2,9 @@ import os
 import numpy as np
 import cv2
 import cvlib as cv
+import math
+from collections import deque
+
 from keras.layers import Activation
 from keras.layers import Conv2D
 from keras.layers import Dense
@@ -212,6 +215,56 @@ def train_model(dataset,
     model.save_weights(weights_filename)
 
 
+class Detection():
+    ''' Class representing detected bounding box. '''
+    def __init__(self):
+        self.bbox = None
+        self.id = None
+
+
+
+def iou(bbox1, bbox2):
+    ''' Calculate intersect over union for 2 bounding boxes. '''
+    bbox1 = [int(x) for x in bbox1]
+    bbox2 = [int(x) for x in bbox2]
+
+    (x0_1, y0_1, x1_1, y1_1) = bbox1
+    (x0_2, y0_2, x1_2, y1_2) = bbox2
+
+    # get the overlap rectangle
+    overlap_x0 = max(x0_1, x0_2)
+    overlap_y0 = max(y0_1, y0_2)
+    overlap_x1 = min(x1_1, x1_2)
+    overlap_y1 = min(y1_1, y1_2)
+
+    # check if there is an overlap
+    if overlap_x1 - overlap_x0 <= 0 or overlap_y1 - overlap_y0 <= 0:
+        return 0
+
+    # if yes, calculate the ratio of the overlap to each ROI size and the unified size
+    size_1 = (x1_1 - x0_1) * (y1_1 - y0_1)
+    size_2 = (x1_2 - x0_2) * (y1_2 - y0_2)
+    size_intersection = (overlap_x1 - overlap_x0) * (overlap_y1 - overlap_y0)
+    size_union = size_1 + size_2 - size_intersection
+    return size_intersection / size_union
+
+
+def draw_bbox(image, bbox, class_no, prob, color):
+    ''' Draw rectangle representing detected object. '''
+    cv2.rectangle(image, 
+        (bbox[0], bbox[1]), 
+        (bbox[2], bbox[3]), 
+        color, 
+        10)
+    cv2.putText(image, 
+        "class: "+str(class_no)+", prob: " + "{:.2f}".format(prob),
+        (bbox[0],bbox[1]-10),
+        cv2.FONT_HERSHEY_SIMPLEX, 
+        1, 
+        color, 
+        5)
+
+
 def check_model(source,
     model,
     weights_filename,
@@ -251,6 +304,8 @@ def check_model(source,
 
     counter = 0
 
+    old_detections_list = []
+
     # iterate over video frame and predict class of detected people
     while True:
         counter += 1
@@ -268,6 +323,9 @@ def check_model(source,
 
         # apply object detection
         bbox, label, _ = cv.detect_common_objects(frame, confidence=confidence, model='yolov3-tiny')
+
+        # initialize FIFO buffer
+        detections_list = []
 
         # filter people class
         for i in range(len(label)):
@@ -288,38 +346,64 @@ def check_model(source,
                 id = model.predict(image)
                 id = id.item(0)
 
-                # if probability is greater than threshold draw with different color
-                if id > threshold:
-                    cv2.rectangle(frame, 
-                        (bbox[i][0], bbox[i][1]), 
-                        (bbox[i][2], bbox[i][3]), 
-                        COLORS[0], 
-                        10)
-                    cv2.putText(frame, 
-                        "class: 1, prob: " + "{:.2f}".format(id),
-                        (bbox[i][0],bbox[i][1]-10), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 
-                        1, 
-                        COLORS[0], 
-                        5)
+                detection = Detection()
+                detection.bbox = bbox[i]
+
+                # if first frame set default weight
+                previous_id_weight = 0.5
+
+                # if old detections are present
+                if len(old_detections_list) > 0:
+                    # number of bounding boxes wich have maximum IoU of each iterations
+                    iou_counter = 1
+                    max_iou = 0
+                    max_iou_bbox = None
+
+                    # for each past frame wich is stored
+                    for j in range(0, len(old_detections_list)):
+
+                        # for each detection of past frames starting with the oldest
+                        for k in range(len(old_detections_list[j])): 
+                            val = iou(bbox[i], old_detections_list[j][k].bbox)
+                            if val > max_iou:
+                                max_iou = val
+                                max_iou_bbox = old_detections_list[j][k]
+
+                        # for the best result in frame update weight
+                        if max_iou_bbox is not None and max_iou_bbox > 0:
+                            iou_counter += 1
+                            tmp_bbox = max_iou_bbox.bbox
+                            previous_id_weight += math.pow(max_iou, 2) * max_iou_bbox.id * j
+
+                    # divide weight by number of accumulations
+                    previous_id_weight /= iou_counter
+
+                # calulate new probability of classes
+                if np.mean((id ,previous_id_weight)) > threshold:
+                    detection.id = 1
                 else:
-                    cv2.rectangle(frame, 
-                        (bbox[i][0], bbox[i][1]), 
-                        (bbox[i][2], bbox[i][3]), 
-                        COLORS[1], 
-                        10)
-                    cv2.putText(frame, 
-                        "class: 0, prob: " + "{:.2f}".format(id),
-                        (bbox[i][0],bbox[i][1]-10), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 
-                        1, 
-                        COLORS[1], 
-                        5)
+                    detection.id = 0
+
+                # add current detection to list of current detections
+                detections_list.append(detection)
+
+                # if probability is greater than threshold draw with different color
+                if detection.id > threshold:
+                    draw_bbox(frame, bbox[i], 1, detection.id, COLORS[0])
+                else:
+                    draw_bbox(frame, bbox[i], 0, detection.id, COLORS[0])
 
         frame = cv2.resize(frame, dsize=None, fx=scale, fy=scale)
 
         # display output
-        cv2.imshow("Real-time object detection", frame)
+        cv2.imshow("Person ReID", frame)
+
+        # if FIFO is full remove first element
+        if len(old_detections_list) > 10:
+            old_detections_list.remove(old_detections_list[0])
+
+        # append current detections list to FIFO buffer
+        old_detections_list.append(detections_list)
 
         # press "ESC" to stop
         if cv2.waitKey(0) == 27:
