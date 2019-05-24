@@ -25,12 +25,6 @@ parser.add_argument("--source",
                 dest="source",
                 required=True)
 
-parser.add_argument("--dataset",
-                "-d",
-                help="path to dataset",
-                dest="dataset",
-                required=True)
-
 parser.add_argument("--weight_file",
                 "-w",
                 help="path to weight file",
@@ -40,15 +34,9 @@ parser.add_argument("--weight_file",
 # read arguments from the command line
 args = parser.parse_args()
 
-model.train_model(dataset=args.dataset,
-        model=model.cifar_10_cnn((128,128,3)),
-        weights_filename=args.weight_file,
-        epochs=10,
-        restore=False)
-
 model.check_model(source=args.source,
         model=model.cifar_10_cnn((128,128,3)),
         weights_filename=args.weight_file,
-        image_size=None,
+        image_size=128,
         start=0,
         threshold=0.5)
