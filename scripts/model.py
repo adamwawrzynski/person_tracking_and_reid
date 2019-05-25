@@ -370,10 +370,10 @@ def check_model(source,
                                 max_iou_bbox = old_detections_list[j][k]
 
                         # for the best result in frame update weight
-                        if max_iou_bbox is not None and max_iou_bbox > 0:
+                        if max_iou_bbox is not None and max_iou > 0:
                             iou_counter += 1
                             tmp_bbox = max_iou_bbox.bbox
-                            previous_id_weight += math.pow(max_iou, 2) * max_iou_bbox.id * j
+                            previous_id_weight += math.pow(max_iou, 2) * max_iou_bbox.id
 
                     # divide weight by number of accumulations
                     previous_id_weight /= iou_counter
@@ -391,7 +391,7 @@ def check_model(source,
                 if detection.id > threshold:
                     draw_bbox(frame, bbox[i], 1, detection.id, COLORS[0])
                 else:
-                    draw_bbox(frame, bbox[i], 0, detection.id, COLORS[0])
+                    draw_bbox(frame, bbox[i], 0, detection.id, COLORS[1])
 
         frame = cv2.resize(frame, dsize=None, fx=scale, fy=scale)
 
