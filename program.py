@@ -48,18 +48,18 @@ args = parser.parse_args()
 
 # c_d.clean_manual_data(dataset="data/data_manual_video2_Chybicki.txt", id=2)
 
-c_d.create_dataset_from_manual_data(source=args.source, destination="data/class_2/",
-                        dataset="data/data_manual_video2_Chybicki.txt")
+# c_d.create_dataset_from_manual_data(source=args.source, destination="data/class_2/",
+#                         dataset="data/data_manual_video2_Chybicki.txt")
 
-# model.train_model(dataset="data/",
-#         model=model.cifar_10_cnn((128,128,3)),
-#         weights_filename=args.weight_file,
-#         iterations=10,
-#         epochs=1,
-#         restore=False)
+model.train_model(dataset=args.dataset,
+        model=model.cifar_10_cnn((128,128,3)),
+        weights_filename=args.weight_file,
+        epochs=10,
+        restore=False)
 
-# model.check_model(source=args.source,
-#         model=model.cifar_10_cnn((128,128,3)),
-#         weights_filename=args.weight_file,
-#         start=0,
-#         threshold=0.5)
+model.check_model(source=args.source,
+        model=model.cifar_10_cnn((128,128,3)),
+        weights_filename=args.weight_file,
+        image_size=None,
+        start=0,
+        threshold=0.5)
