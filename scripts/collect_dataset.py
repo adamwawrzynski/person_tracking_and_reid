@@ -40,12 +40,29 @@ def mouse_callback_yolo(event,x,y,flags,param):
         mouse1X, mouse1Y = x, y
 
 
-def manual_label_video(source, dataset, start=0, scale=0.3, color=(255,255,255)):
+def clean_manual_data(dataset, id):
+    file = open(dataset.split('.')[0] + "_cleaned.txt", "w")
+
+    with open(dataset, 'r') as f:
+        while True:
+            line = f.readline()
+            if not line:
+                break
+            if 'Frame' in line:
+                line2 = f.readline().rstrip('\n')
+                if ',' in line2:
+                    file.write(line)
+                    file.write(line2 + ',' + str(id) + '\n')
+
+    file.close()
+
+def manual_label_video(source, dataset, start=0, id=0, scale=0.3, color=(255,255,255)):
     ''' Manually label object on video to create train dataset.
     1 left mouse click - specify left right corner of bounding box
     2 left mouse click - specify right bottom corner of bounding box
     q - pass previous bounding box coordinates to the next frame
     w - erase bounding box coordinates
+    e - skip 30 frames
     '''
 
     global mouse1X, mouse1Y, mouse2X, mouse2Y
@@ -77,6 +94,7 @@ def manual_label_video(source, dataset, start=0, scale=0.3, color=(255,255,255))
         exit()
 
     counter = 0
+    skip = 0
 
     # until end of video
     while True:
@@ -90,15 +108,21 @@ def manual_label_video(source, dataset, start=0, scale=0.3, color=(255,255,255))
         # skip number of frames
         if counter < start:
             continue
+        elif skip > 0:
+            skip -= 1
+            continue
         else:
 
             # rotate frame to vertical position
             frame = rotateImage(frame, 270)
 
-            file.write('Frame {}\n'.format(counter))
-            file.flush()
-
             frame = cv2.resize(frame, dsize=None, fx=scale, fy=scale)
+            if mouse1X is not None and mouse1Y is not None and mouse2X is not None and mouse2Y is not None:
+                cv2.rectangle(frame,
+                              (mouse1X, mouse1Y),
+                              (mouse2X, mouse2Y),
+                              color,
+                              2)
             cv2.imshow('image', frame)
 
             # press 'w' to erase previous bounding box
@@ -106,6 +130,9 @@ def manual_label_video(source, dataset, start=0, scale=0.3, color=(255,255,255))
             key = cv2.waitKey(0)
             if key == 27:
                 exit()
+            elif key == ord('e'):
+                skip = 30
+                text = 'None'
             elif key == ord('w'):
                 text = str(int(mouse1X/scale))+','+ \
                         str(int(mouse1Y/scale))+','+ \
@@ -119,16 +146,14 @@ def manual_label_video(source, dataset, start=0, scale=0.3, color=(255,255,255))
                 if mouse1X is None or mouse1Y is None or mouse2X is None or mouse2Y is None:
                     text = 'None'
                 else:
-                    cv2.rectangle(frame, 
-                            (mouse1X, mouse1Y), 
-                            (mouse2X, mouse2Y), 
-                            color, 
-                            2)
-                    cv2.imshow('image', frame)
                     text = str(int(mouse1X/scale))+','+ \
                             str(int(mouse1Y/scale))+','+ \
                             str(int(mouse2X/scale))+','+ \
                             str(int(mouse2Y/scale))
+
+
+            file.write('Frame {}\n'.format(counter))
+            file.flush()
 
             file.write(text+'\n')
             file.flush()
@@ -250,7 +275,90 @@ def label_detected_person_on_video(source, dataset, confidence=0.25, start=0, sc
     file.close()
 
 
-def create_dataset(source, destination, dataset):
+def create_dataset_from_manual_data(source, destination, dataset, scale=0.3):
+    ''' Create fixed size dataset of images from video on disk. Manual data contains single coordinates of specific
+    class per frame '''
+
+    # check if video file exists
+    if not os.path.isfile(source):
+        print("Video file does not exist, exiting")
+        exit()
+
+    # open dataset of bounding boxes with corresponding classes for frames
+    file = open(dataset, "r")
+
+    # read video
+    video = cv2.VideoCapture(source)
+
+    # exit if video not opened
+    if not video.isOpened():
+        print("Could not open video")
+        exit()
+
+    # read frame from video
+    status, frame = video.read()
+
+    if not status:
+        exit()
+
+    line = ' '
+
+    counter_class = 0
+
+    if not os.path.exists(destination):
+        os.mkdir(destination)
+
+    counter = 0
+    is_next_frame = True
+    # until end of file
+    while True:
+
+        if is_next_frame:
+            line = file.readline()
+            if 'Frame' in line:
+                # get frame number from line
+                frame_number = int(line.split(' ')[1])
+                is_next_frame = False
+            else:
+                break
+
+        counter += 1
+        status, frame = video.read()
+        if not status:
+            exit()
+
+        #skip to frame number
+        if counter < frame_number:
+            continue
+
+        # rotate frame to vertical position
+        frame = rotateImage(frame, 270)
+        frame = cv2.resize(frame, dsize=None, fx=scale, fy=scale)
+
+        #get next line with coordinates
+        line = file.readline()
+        x1, y1, x2, y2, id = line.split(",")
+        x1 = int(int(x1) * scale)
+        y1 = int(int(y1) * scale)
+        x2 = int(int(x2) * scale)
+        y2 = int(int(y2) * scale)
+        id = int(id)
+
+        # extract detected person from video frame
+        image = frame[y1:y2, x1:x2]
+        image = cv2.resize(image, dsize=(128, 128), interpolation=cv2.INTER_CUBIC)
+
+        counter_class += 1
+        cv2.imwrite(destination + str(counter_class) + ".jpg", image)
+
+        is_next_frame = True
+
+
+    # release resources
+    cv2.destroyAllWindows()
+    file.close()
+
+def create_dataset(source, destination, dataset, image_size):
     ''' Create fixed size dataset of images from video on disk. '''
 
     # check if video file exists
@@ -315,7 +423,10 @@ def create_dataset(source, destination, dataset):
                 # extract detected person from video frame
                 image = frame[y1:y2, x1:x2]
 
-                image = cv2.resize(image, dsize=(128, 128), interpolation=cv2.INTER_CUBIC)
+                if image_size != None:
+                    image = cv2.resize(image,
+                                dsize=(image_size, image_size),
+                                interpolation=cv2.INTER_CUBIC)
 
                 if id == 0:
                     counter_class_0 += 1
@@ -323,6 +434,9 @@ def create_dataset(source, destination, dataset):
                 elif id == 1:
                     counter_class_1 += 1
                     cv2.imwrite(destination+"/class_1/"+str(counter_class_1)+".jpg", image)
+
+                print("Saved images: {}".format(counter_class_1 + counter_class_0),end="\r", flush=True)
+
             else:
                 break
 
