@@ -25,18 +25,18 @@ parser.add_argument("--source",
                 dest="source",
                 required=True)
 
-parser.add_argument("--weight_file",
-                "-w",
-                help="path to weight file",
-                dest="weight_file",
-                required=True)
-
 # read arguments from the command line
 args = parser.parse_args()
 
-model.check_model(source=args.source,
-        model=model.cifar_10_cnn((128,128,3)),
-        weights_filename=args.weight_file,
+# model.train_siamese_net(dataset="data/dataset_128",
+#         model=model.siamese_network((128,128,3)),
+#         weights_filename=args.weight_file,
+#         epochs=20,
+#         restore=True)
+
+model.check_siamese_model(source=args.source,
+        model_encoder=model.siamese_encoder((128,128,3)),
+        model_core=model.siamese_network_core((1280,)),
+        pretrained_model=True,
         image_size=128,
-        start=0,
-        threshold=0.5)
+        start=0)
