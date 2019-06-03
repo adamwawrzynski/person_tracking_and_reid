@@ -339,7 +339,7 @@ def create_dataset(source, destination, dataset, image_size):
     file.close()
 
 
-def get_dataset(dataset):
+def get_dataset(dataset, stop=None, skip=1):
     ''' Return array of images for each class. '''
 
     # check if video file exists
@@ -356,13 +356,19 @@ def get_dataset(dataset):
     counter = 1
 
     for image_file in class_0_images_filenames:
-        image = cv2.imread(class_0_dataset_path+"/"+image_file, cv2.IMREAD_COLOR)
-        print("Loading images from {}: {}/{}".format(class_0_dataset_path,
-            counter,
-            images_number),
-            end="\r", flush=True)
-        counter += 1
-        class_0.append(image)
+        if counter % skip == 0:
+            image = cv2.imread(class_0_dataset_path+"/"+image_file, cv2.IMREAD_COLOR)
+            print("Loading images from {}: {}/{}".format(class_0_dataset_path,
+                counter,
+                images_number),
+                end="\r", flush=True)
+            counter += 1
+            class_0.append(np.reshape(image, (1,) + image.shape))
+        else:
+            counter += 1
+        if stop is not None:
+            if counter > stop:
+                break
     print("")
 
     class_1_dataset_path = dataset+"/class_1"
@@ -374,22 +380,29 @@ def get_dataset(dataset):
     counter=1
 
     for image_file in class_1_images_filenames:
-        image = cv2.imread(class_1_dataset_path+"/"+image_file, cv2.IMREAD_COLOR)
-        print("Loading images from {}: {}/{}".format(class_1_dataset_path,
-            counter,
-            images_number),
-            end="\r", flush=True)
-        counter += 1
-        class_1.append(image)
+        if counter % skip == 0:
+            image = cv2.imread(class_1_dataset_path+"/"+image_file, cv2.IMREAD_COLOR)
+            print("Loading images from {}: {}/{}".format(class_1_dataset_path,
+                counter,
+                images_number),
+                end="\r", flush=True)
+            counter += 1
+            class_1.append(np.reshape(image, (1,) + image.shape))
+        else:
+            counter += 1
+        if stop is not None:
+            if counter > stop:
+                break
     print("")
 
     class_0 = np.asarray(class_0)
     class_1 = np.asarray(class_1)
 
+
     return class_0, class_1
 
 
-def split_dataset(class_0, class_1, test_size=0.1):
+def split_dataset(class_0, class_1, test_size=0.2):
     # create class labels
     y_class_0 = np.zeros((class_0.shape[0], 1))
     y_class_1 = np.ones((class_1.shape[0], 1))
@@ -400,19 +413,20 @@ def split_dataset(class_0, class_1, test_size=0.1):
 
     return class_0_train, class_1_train, class_0_test, class_1_test
 
+
 def normalize_dataset(class_0, class_1, validation_split=0.1):
     ''' Normalize dataset and return array of images and classes. '''
     # randomize order in dataset
     np.random.shuffle(class_0)
 
     # get number of elements equal to class 1 elements
-    class_0 = class_0[:class_1.shape[0]]
+    tmp_class_0 = class_0[:class_1.shape[0]]
 
     # create one dataset
-    X = np.concatenate((class_0, class_1), axis=0)
+    X = np.concatenate((tmp_class_0, class_1), axis=0)
 
     # create class labels
-    y_class_0 = np.zeros((class_0.shape[0], 1))
+    y_class_0 = np.zeros((tmp_class_0.shape[0], 1))
     y_class_1 = np.ones((class_1.shape[0], 1))
 
     y = np.concatenate((y_class_0, y_class_1), axis=0)
