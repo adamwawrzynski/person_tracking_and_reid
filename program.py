@@ -38,5 +38,6 @@ model.check_siamese_model(source=args.source,
         model_encoder=model.siamese_encoder((128,128,3)),
         model_core=model.siamese_network_core((1280,)),
         pretrained_model=True,
+        distance_threshold=60.0,
         image_size=128,
         start=0)
