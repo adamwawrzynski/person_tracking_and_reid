@@ -10,7 +10,6 @@ from scripts.collect_dataset import get_dataset
 from scripts.collect_dataset import create_dataset
 from scripts.collect_dataset import split_dataset
 from scripts.collect_dataset import label_detected_person_on_video
-from scripts.collect_dataset import check_label_video_from_yolo
 from scripts.utils import rotateImage
 import scripts.model as model
 
