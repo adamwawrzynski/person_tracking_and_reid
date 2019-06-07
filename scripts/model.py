@@ -267,6 +267,7 @@ def check_siamese_model(source,
     model_encoder,
     image_size,
     pretrained_model,
+    model_extractor='yolov3-tiny',
     weights_filename=None,
     memmory_size=1,
     start=0,
@@ -326,7 +327,7 @@ def check_siamese_model(source,
         frame = rotateImage(frame, 270)
 
         # apply object detection
-        bbox, label, _ = cv.detect_common_objects(frame, confidence=confidence, model='yolov3-tiny')
+        bbox, label, _ = cv.detect_common_objects(frame, confidence=confidence, model=model_extractor)
 
         # initialize FIFO buffer
         detections_list = []

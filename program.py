@@ -28,15 +28,10 @@ parser.add_argument("--source",
 # read arguments from the command line
 args = parser.parse_args()
 
-# model.train_siamese_net(dataset="data/dataset_128",
-#         model=model.siamese_network((128,128,3)),
-#         weights_filename=args.weight_file,
-#         epochs=20,
-#         restore=True)
-
 model.check_siamese_model(source=args.source,
         model_encoder=model.siamese_encoder((128,128,3)),
         model_core=model.siamese_network_core((1280,)),
+        model_extractor='yolov3',
         pretrained_model=True,
         distance_threshold=60.0,
         image_size=128,
