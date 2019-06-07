@@ -20,8 +20,7 @@ mouse2Y = None
 
 
 def mouse_callback(event,x,y,flags,param):
-    ''' Create callback to point bounding box of detected person during manual
-     labelling. '''
+    """Callback to point at bbox of detected person during manual labelling."""
 
     global mouse1X, mouse1Y, mouse2X, mouse2Y
     if event == cv2 .EVENT_LBUTTONDOWN:
@@ -31,22 +30,14 @@ def mouse_callback(event,x,y,flags,param):
             mouse2X, mouse2Y = x, y
 
 
-def mouse_callback_yolo(event,x,y,flags,param):
-    ''' Create callback to point bounding box of detected person during manual
-    labelling. '''
-
-    global mouse1X, mouse1Y, mouse2X, mouse2Y
-    if event == cv2 .EVENT_LBUTTONDOWN:
-        mouse1X, mouse1Y = x, y
-
-
 def manual_label_video(source, dataset, start=0, scale=0.3, color=(255,255,255)):
-    ''' Manually label object on video to create train dataset.
+    """Manually label object on video to create train dataset.
+
     1 left mouse click - specify left right corner of bounding box
     2 left mouse click - specify right bottom corner of bounding box
     q - pass previous bounding box coordinates to the next frame
     w - erase bounding box coordinates
-    '''
+    """
 
     global mouse1X, mouse1Y, mouse2X, mouse2Y
 
@@ -139,8 +130,7 @@ def manual_label_video(source, dataset, start=0, scale=0.3, color=(255,255,255))
 
 
 def label_detected_person_on_video(source, dataset, confidence=0.25, start=0, scale=0.3):
-    ''' Create dataset of detected people using YOLOv3 by pointing at given 
-    bounding box. '''
+    """Label detected people and write to bbox with class to file."""
 
     global mouse1X, mouse1Y, mouse2X, mouse2Y
 
@@ -251,7 +241,7 @@ def label_detected_person_on_video(source, dataset, confidence=0.25, start=0, sc
 
 
 def create_dataset(source, destination, dataset, image_size):
-    ''' Create fixed size dataset of images from video on disk. '''
+    """Create fixed size dataset of images from video."""
 
     # check if video file exists
     if not os.path.isfile(source):
@@ -340,7 +330,7 @@ def create_dataset(source, destination, dataset, image_size):
 
 
 def get_dataset(dataset, stop=None, skip=1):
-    ''' Return array of images for each class. '''
+    """Return array of images for each class."""
 
     # check if video file exists
     if not os.path.exists(dataset):
@@ -403,6 +393,8 @@ def get_dataset(dataset, stop=None, skip=1):
 
 
 def split_dataset(class_0, class_1, test_size=0.2):
+    """Split and return dataset to test and train arrays."""
+
     # create class labels
     y_class_0 = np.zeros((class_0.shape[0], 1))
     y_class_1 = np.ones((class_1.shape[0], 1))
@@ -415,7 +407,8 @@ def split_dataset(class_0, class_1, test_size=0.2):
 
 
 def normalize_dataset(class_0, class_1, validation_split=0.1):
-    ''' Normalize dataset and return array of images and classes. '''
+    """Normalize dataset and return array of images and classes."""
+
     # randomize order in dataset
     np.random.shuffle(class_0)
 
@@ -437,7 +430,7 @@ def normalize_dataset(class_0, class_1, validation_split=0.1):
 
 
 def check_label_video(source, dataset, start=0, scale=0.3):
-    ''' Display video and collected dataset to validate. '''
+    """Display video and collected dataset to validate."""
 
     # check if video file exists
     if not os.path.isfile(source):
@@ -517,115 +510,8 @@ def check_label_video(source, dataset, start=0, scale=0.3):
     file.close()
 
 
-def check_label_video_from_yolo(source, dataset, start=0, scale=0.3):
-    ''' Display video and collected dataset to validate. '''
-
-    # check if video file exists
-    if not os.path.isfile(source):
-        print("Video file does not exist, exiting")
-        exit()
-
-    # read collected dataset
-    file = open(dataset, "r")
-
-    # read video
-    video = cv2.VideoCapture(source)
-
-    # exit if video not opened
-    if not video.isOpened():
-        print("Could not open video")
-        exit()
-
-    # read frame from video
-    status, frame = video.read()
-
-    if not status:
-        exit()
-
-    counter = 0
-
-    # until end of video
-    while True:
-        counter =  counter + 1
-        line = ''
-
-        # skip number of frames
-        if counter < start:
-            line = file.readline()
-            while 'Frame' in line:
-                line = file.readline()
-            continue
-
-        status, frame = video.read()
-
-        if not status:
-            exit()
-
-        # rotate frame to vertical position
-        frame = rotateImage(frame, 270)
-
-        line = file.readline()
-
-        # until end of file
-        while line != '':
-
-            # until next frame
-            if not 'Frame' in line:
-                x1, y1, x2, y2, id = line.split(",")
-
-                if '1' in id:
-                    cv2.rectangle(frame, 
-                        (int(int(x1)/scale), int(int(y1)/scale)), 
-                        (int(int(x2)/scale), int(int(y2)/scale)), 
-                        COLORS[0], 
-                        10)
-                    cv2.putText(frame, 
-                        str(int(x1)) +","+str(int(y1))+","+str(int(x2))+","+str(int(y2)),
-                        (int(int(x1)/scale), int(int(y1)/scale) - 10), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 
-                        1, 
-                        COLORS[0], 
-                        5)
-                else:
-                    cv2.rectangle(frame, 
-                        (int(int(x1)/scale), int(int(y1)/scale)), 
-                        (int(int(x2)/scale), int(int(y2)/scale)), 
-                        COLORS[1], 
-                        10)
-                    cv2.putText(frame, 
-                        str(int(x1)) +","+str(int(y1))+","+str(int(x2))+","+str(int(y2)),
-                        (int(int(x1)/scale), int(int(y1)/scale) - 10), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 
-                        1, 
-                        COLORS[1], 
-                        5)
-            else:
-                break
-
-            line = file.readline()
-
-        # press 'ESC' to exit
-        key = cv2.waitKey(0)
-        if key != 27:
-            frame = cv2.resize(frame, dsize=None, fx=scale, fy=scale)
-            cv2.putText(frame, 
-                        "Frame "+str(counter - 1),
-                        (50, 50), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 
-                        1, 
-                        COLORS[1], 
-                        3)
-            cv2.imshow('image', frame)
-        else:
-            exit()
-
-    # release resources
-    cv2.destroyAllWindows()
-    file.close()
-
-
 def process_video(source, dataset, confidence, scale=0.3):
-    ''' Detect people on video using pretrained YOLOv3 network. '''
+    """Detect people on video using pretrained YOLOv3 network."""
 
     # check if video file exists
     if not os.path.isfile(source):
@@ -706,7 +592,7 @@ def process_video(source, dataset, confidence, scale=0.3):
 
 
 def detect_faces_on_video(source, scale=0.3):
-    ''' Detect people's faces on video using pretrained YOLOv3 network. '''
+    """Detect people's faces on video using pretrained YOLOv3 network."""
 
     # check if video file exists
     if not os.path.isfile(source):

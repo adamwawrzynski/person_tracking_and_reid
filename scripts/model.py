@@ -34,40 +34,40 @@ from .utils import rotateImage
 
 
 def accuracy(y_true, y_pred):
-    '''Compute classification accuracy with a fixed threshold on distances.
-    '''
+    """Computes classification accuracy with a fixed threshold on distances."""
+
     return K.mean(K.equal(y_true, K.cast(y_pred < 0.5, y_true.dtype)))
 
 
 def euclidean_distance(vects):
+    """Computes Euclidean distance of 2 arrays."""
+
     x, y = vects
     sum_square = K.sum(K.square(x - y), axis=1, keepdims=True)
     return K.sqrt(K.maximum(sum_square, K.epsilon()))
 
 
 def eucl_dist_output_shape(shapes):
+    """Computes output shape of Euclidean distance vector."""
+
     shape1, shape2 = shapes
     return (shape1[0], 1)
 
 
 def contrastive_loss(y_true, y_pred):
-    '''Contrastive loss from Hadsell-et-al.'06
+    """Contrastive loss from Hadsell-et-al.'06
+
     http://yann.lecun.com/exdb/publis/pdf/hadsell-chopra-lecun-06.pdf
-    '''
+    """
     margin = 1
     sqaure_pred = K.square(y_pred)
     margin_square = K.square(K.maximum(margin - y_pred, 0))
     return K.mean(y_true * sqaure_pred + (1 - y_true) * margin_square)
 
 
-def compute_accuracy(y_true, y_pred):
-    '''Compute classification accuracy with a fixed threshold on distances.
-    '''
-    pred = y_pred.ravel() < 0.5
-    return np.mean(pred == y_true)
-
-
 def siamese_network(input_shape):
+    """Creates and returns model of encoder part of Siamese network."""
+
     left_input = Input(input_shape)
     right_input = Input(input_shape)
 
@@ -100,11 +100,15 @@ def siamese_network(input_shape):
 
 
 def siamese_encoder(input_shape):
+    """Creates and returns model of encoder part of Siamese network."""
+
     model = MobileNetV2(include_top=False, pooling="max", weights="imagenet", input_shape=input_shape)
     return model
 
 
 def siamese_network_core(input_shape):
+    """Creates and return keras model of Siamese net using pretrained model."""
+
     encoded_l = Input(input_shape)
     encoded_r = Input(input_shape)
 
@@ -124,7 +128,7 @@ def train_siamese_net(dataset,
     epochs,
     use_itertools=True,
     restore=False):
-    ''' Train model to detect only specified person. '''
+    """Train model and save pretrained weights."""
 
     # if retrain model weights
     if restore == True:
@@ -211,7 +215,8 @@ def train_siamese_net(dataset,
 
 
 class Detection():
-    ''' Class representing detected bounding box. '''
+    """Represents detected bounding box."""
+
     def __init__(self):
         self.bbox = None
         self.id = None
@@ -221,7 +226,8 @@ class Detection():
 
 
 def iou(bbox1, bbox2):
-    ''' Calculate intersect over union for 2 bounding boxes. '''
+    """Calculate and return intersect over union for 2 bounding boxes."""
+
     bbox1 = [int(x) for x in bbox1]
     bbox2 = [int(x) for x in bbox2]
 
@@ -275,8 +281,7 @@ def check_siamese_model(source,
     iou_threshold=0.7,
     confidence=0.1,
     scale=0.3):
-    ''' Display video and draw bounding boxes of detected people with
-    predicted classes. '''
+    """Display video and draw bbox of detected people with predicted classes."""
 
     # check if video file exists
     if not os.path.isfile(source):

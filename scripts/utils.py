@@ -2,7 +2,7 @@ import cv2
 
 
 def rotateImage(image, angle):
-    ''' Rotate image by given angle clockwise. '''
+    """Rotate image by given angle clockwise and return processed image."""
 
     height = image.shape[0]
     width = image.shape[1]
@@ -28,7 +28,7 @@ def rotateImage(image, angle):
 
 
 def rectangleContains(bbox, x, y):
-    ''' Check if rectangle contains given point. '''
+    """Check if rectangle contains given point."""
 
     if x is None or y is None:
         return 0
